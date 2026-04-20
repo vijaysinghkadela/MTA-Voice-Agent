@@ -2,14 +2,14 @@
 
 AI voice assistant for Manglam Technical Agency. Handles inbound calls, speaks Hindi/English/Hinglish, saves everything to Notion + Supabase.
 
-**Stack**: Twilio (calls) + Google Gemini 2.5 Flash (voice AI) + Notion (inbox) + Supabase (storage) + Render (hosting)
+**Stack**: Exotel (calls) + Google Gemini 2.5 Flash (voice AI) + Notion (inbox) + Supabase (storage) + Render (hosting)
 
 ## Architecture
 
 ```
-Client calls Twilio number
+Client calls MTA number
        ↓
-Twilio streams audio (WebSocket) → /stream
+Exotel streams audio (WebSocket) → /stream
        ↓
 Server bridges to Gemini 2.5 Flash Multimodal Live
        ↓
@@ -34,11 +34,11 @@ Notion card created + Supabase row inserted
 - Set `WEBHOOK_BASE_URL` to your Render URL
 - **Use Starter plan ($7/mo)** — free tier sleeps and will drop calls
 
-### 3. Twilio setup
-- twilio.com → create account
-- Buy an Indian virtual number
-- Phone Numbers → Manage → configure:
-  - Voice webhook: `https://your-render-url.onrender.com/twiml/voice` (POST)
+### 3. Exotel setup
+- exotel.com → create account
+- Use your MTA number `+919694322131` with Exotel flow/webhook routing
+- Configure voice webhook:
+  - `https://your-render-url.onrender.com/ivr/voice` (GET or POST)
 
 ### 4. Notion integration
 - notion.so → Settings → Connections → Create integration
@@ -57,9 +57,9 @@ See `.env.example` for all required variables.
 npm install
 cp .env.example .env   # fill in values
 npm run dev
-# Use ngrok for local Twilio testing:
+# Use ngrok for local Exotel testing:
 # ngrok http 3000
-# Set Twilio webhook to your ngrok URL
+# Set Exotel webhook to your ngrok URL
 ```
 
 ## Notion inbox

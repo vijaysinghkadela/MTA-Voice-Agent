@@ -1,4 +1,4 @@
--- MTA Voice Agent v2 — Call Logs (Twilio + Gemini)
+-- MTA Voice Agent v3 — Call Logs (Exotel + Gemini)
 -- Run in Supabase SQL Editor
 
 CREATE TABLE IF NOT EXISTS call_logs (

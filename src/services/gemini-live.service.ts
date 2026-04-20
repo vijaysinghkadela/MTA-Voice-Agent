@@ -2,7 +2,7 @@ import { GoogleGenAI, Modality, type LiveServerMessage } from '@google/genai';
 import { WebSocket } from 'ws';
 import { config } from '../config.js';
 import { buildSystemPrompt } from '../prompts/priya.prompt.js';
-import { twilioToGemini, geminiToTwilio } from '../utils/audio.js';
+import { phoneToGemini, geminiToPhone } from '../utils/audio.js';
 import type { TranscriptEntry } from '../types/index.js';
 
 const ai = new GoogleGenAI({ apiKey: config.GOOGLE_API_KEY });
@@ -11,20 +11,19 @@ export interface CallSession {
   callSid: string;
   streamSid: string;
   callerPhone: string;
-  twilioWs: WebSocket;
+  telephonyWs: WebSocket;
   geminiSession: Awaited<ReturnType<typeof ai.live.connect>>;
   transcript: TranscriptEntry[];
   startTime: number;
 }
 
-// Active sessions keyed by callSid
 export const sessions = new Map<string, CallSession>();
 
 export async function createSession(
   callSid: string,
   streamSid: string,
   callerPhone: string,
-  twilioWs: WebSocket,
+  ws: WebSocket,
 ): Promise<CallSession> {
   const transcript: TranscriptEntry[] = [];
   const startTime = Date.now();
@@ -41,72 +40,52 @@ export async function createSession(
           prebuiltVoiceConfig: { voiceName: config.GEMINI_VOICE },
         },
       },
-      // Transcribe both sides for Notion/Supabase record
       inputAudioTranscription: {},
       outputAudioTranscription: {},
     },
     callbacks: {
-      onopen: () => {
-        console.log(`🎤 Gemini session open [${callSid}]`);
-      },
+      onopen: () => console.log(`🎤 Gemini session open [${callSid}]`),
 
       onmessage: (msg: LiveServerMessage) => {
-        // Audio response → send back to Twilio
+        // Audio → convert and stream back to phone caller
         const parts = msg.serverContent?.modelTurn?.parts ?? [];
         for (const part of parts) {
           if (part.inlineData?.mimeType?.startsWith('audio/')) {
-            const converted = geminiToTwilio(part.inlineData.data ?? '');
-            if (twilioWs.readyState === WebSocket.OPEN) {
-              twilioWs.send(
-                JSON.stringify({
-                  event: 'media',
-                  streamSid,
-                  media: { payload: converted },
-                }),
-              );
+            const phoneAudio = geminiToPhone(part.inlineData.data ?? '');
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({
+                event: 'media',
+                streamSid,
+                media: { payload: phoneAudio },
+              }));
             }
           }
         }
-
         // Collect transcripts
         const inTx = msg.serverContent?.inputTranscription?.text;
         const outTx = msg.serverContent?.outputTranscription?.text;
-        if (inTx?.trim()) {
-          transcript.push({ role: 'user', content: inTx.trim(), timestamp: Date.now() - startTime });
-        }
-        if (outTx?.trim()) {
-          transcript.push({ role: 'assistant', content: outTx.trim(), timestamp: Date.now() - startTime });
-        }
+        const now = Date.now() - startTime;
+        if (inTx?.trim()) transcript.push({ role: 'user', content: inTx.trim(), timestamp: now });
+        if (outTx?.trim()) transcript.push({ role: 'assistant', content: outTx.trim(), timestamp: now });
       },
 
-      onerror: (e: ErrorEvent) => {
-        console.error(`❌ Gemini error [${callSid}]:`, e.message);
+      onerror: (e: unknown) => {
+        const message = e instanceof Error ? e.message : String(e);
+        console.error(`❌ Gemini [${callSid}]:`, message);
       },
-
-      onclose: () => {
-        console.log(`🔴 Gemini session closed [${callSid}]`);
-      },
+      onclose: () => console.log(`🔴 Gemini closed [${callSid}]`),
     },
   });
 
-  const session: CallSession = {
-    callSid,
-    streamSid,
-    callerPhone,
-    twilioWs,
-    geminiSession,
-    transcript,
-    startTime,
-  };
-
+  const session: CallSession = { callSid, streamSid, callerPhone, telephonyWs: ws, geminiSession, transcript, startTime };
   sessions.set(callSid, session);
   return session;
 }
 
-export function sendAudioToGemini(callSid: string, base64Mulaw8k: string): void {
+export function sendAudioToGemini(callSid: string, base64Audio: string): void {
   const session = sessions.get(callSid);
   if (!session) return;
-  const pcm16k = twilioToGemini(base64Mulaw8k);
+  const pcm16k = phoneToGemini(base64Audio, 'mulaw');
   session.geminiSession.sendRealtimeInput({
     audio: { data: pcm16k, mimeType: 'audio/pcm;rate=16000' },
   });

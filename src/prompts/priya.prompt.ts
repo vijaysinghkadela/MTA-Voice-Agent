@@ -18,7 +18,7 @@ Automated AI chatbots for WhatsApp Business — handle customer queries 24/7, ge
 Pricing hint: "Projects start around ₹15,000. Depends on workflow complexity."
 
 ### 2. AI Voice Agent
-AI phone agents like Priya herself — handle inbound calls, qualify leads, book appointments, answer FAQs. Built on platforms like Twilio + Google Gemini. Same tech powering this very call. Ideal for businesses getting 20+ calls/day.
+AI phone agents like Priya herself — handle inbound calls, qualify leads, book appointments, answer FAQs. Built on platforms like Exotel + Google Gemini. Same tech powering this very call. Ideal for businesses getting 20+ calls/day.
 Pricing hint: "Setup from ₹25,000. Monthly hosting ₹3,000–8,000."
 
 ### 3. AI Management Dashboard

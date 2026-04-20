@@ -1,0 +1,98 @@
+{
+  "_instructions": "Paste this config into Vapi Dashboard → Assistants → Create → JSON tab. Fill in YOUR values where marked with <REPLACE>.",
+
+  "name": "Priya — MTA Voice Agent",
+
+  "model": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-6",
+    "temperature": 0.65,
+    "maxTokens": 300,
+    "messages": [
+      {
+        "role": "system",
+        "content": "<REPLACE: paste the full output of buildSystemPrompt() from src/prompts/priya.prompt.ts>"
+      }
+    ]
+  },
+
+  "voice": {
+    "provider": "11labs",
+    "voiceId": "<REPLACE: go to elevenlabs.io/voice-library → search 'Indian female multilingual' → copy Voice ID>",
+    "model": "eleven_multilingual_v2",
+    "stability": 0.45,
+    "similarityBoost": 0.80,
+    "useSpeakerBoost": true,
+    "optimizeStreamingLatency": 3
+  },
+
+  "transcriber": {
+    "provider": "deepgram",
+    "model": "nova-2",
+    "language": "hi-en",
+    "smartFormat": true,
+    "languageDetectionEnabled": true,
+    "keywords": [
+      "MTA:2",
+      "Manglam:2",
+      "Priya:2",
+      "Vinay:2",
+      "Rajasthan:1",
+      "Bikaner:1",
+      "cybersecurity:1",
+      "automation:1",
+      "Shopify:1"
+    ]
+  },
+
+  "firstMessage": "Namaste! Main Priya hoon, Manglam Technical Agency se. Aap kaise help kar sakti hoon aapki?",
+
+  "endCallMessage": "Bahut shukriya call karne ke liye! Hamari team jald hi aapse contact karegi. Namaste!",
+
+  "endCallPhrases": [
+    "goodbye",
+    "bye bye",
+    "alvida",
+    "shukriya bye",
+    "dhanyavaad",
+    "theek hai bye",
+    "ok thanks bye",
+    "thank you goodbye"
+  ],
+
+  "serverUrl": "https://mta-voice-agent.onrender.com/webhook/vapi",
+  "serverUrlSecret": "<REPLACE: must match VAPI_WEBHOOK_SECRET in your .env>",
+
+  "hipaaEnabled": false,
+  "maxDurationSeconds": 600,
+  "backgroundSound": "off",
+  "backchannelingEnabled": true,
+  "backgroundDenoisingEnabled": true,
+  "modelOutputInMessagesEnabled": false,
+
+  "analysisPlan": {
+    "summaryPrompt": "Summarize this call in 2-3 sentences. Include: (1) the caller's name and business, (2) what service they need, (3) their budget/timeline if mentioned, (4) next step agreed. Write in the same language the call was conducted in.",
+    "structuredDataPrompt": "Extract: {client_name, business_name, service_interest, budget, timeline, how_heard, callback_time, language_detected}",
+    "structuredDataSchema": {
+      "type": "object",
+      "properties": {
+        "client_name": { "type": "string" },
+        "business_name": { "type": "string" },
+        "service_interest": {
+          "type": "string",
+          "enum": ["AI & Automation", "Social Media Marketing", "Cybersecurity", "SaaS & Web Dev", "Branding & Identity", "E-Commerce", "Multiple / Unsure"]
+        },
+        "budget": { "type": "string" },
+        "timeline": { "type": "string" },
+        "how_heard": { "type": "string" },
+        "callback_time": { "type": "string" },
+        "language_detected": {
+          "type": "string",
+          "enum": ["Hindi", "English", "Hinglish", "Other"]
+        }
+      }
+    },
+    "successEvaluationPrompt": "Did Priya successfully gather the caller's name, service interest, and a callback time? Answer 'true' or 'false'.",
+    "successEvaluationRubric": "PassFail"
+  }
+}

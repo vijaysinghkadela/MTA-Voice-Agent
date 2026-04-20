@@ -1,26 +1,25 @@
 import { Client } from '@notionhq/client';
 import { config } from '../config.js';
-import type { ProcessedCallData } from '../types/index.js';
-import type { VapiMessage } from '../types/vapi.js';
+import type { ProcessedCallData, TranscriptEntry } from '../types/index.js';
 
 const notion = new Client({ auth: config.NOTION_API_KEY });
 
-function buildTranscriptText(messages: VapiMessage[]): string {
-  return messages
-    .filter(m => m.role === 'user' || m.role === 'assistant')
-    .map(m => {
-      const speaker = m.role === 'user' ? '👤 Client' : '🤖 Priya';
-      const t = Math.floor(m.secondsFromStart);
+function buildTranscriptText(transcript: TranscriptEntry[]): string {
+  return transcript
+    .filter((entry) => entry.role === 'user' || entry.role === 'assistant')
+    .map((entry) => {
+      const speaker = entry.role === 'user' ? '👤 Client' : '🤖 Priya';
+      const t = Math.floor(entry.timestamp / 1000);
       const mins = Math.floor(t / 60).toString().padStart(2, '0');
       const secs = (t % 60).toString().padStart(2, '0');
-      return `[${mins}:${secs}] ${speaker}: ${m.message}`;
+      return `[${mins}:${secs}] ${speaker}: ${entry.content}`;
     })
     .join('\n\n');
 }
 
 export async function createInboxEntry(data: ProcessedCallData): Promise<string> {
-  const transcriptText = data.messages.length > 0
-    ? buildTranscriptText(data.messages)
+  const transcriptText = data.transcript.length > 0
+    ? buildTranscriptText(data.transcript)
     : 'No transcript captured.';
 
   const page = await notion.pages.create({
@@ -53,7 +52,7 @@ export async function createInboxEntry(data: ProcessedCallData): Promise<string>
         rich_text: [{ text: { content: data.summary.slice(0, 2000) } }],
       },
       'Call Duration (sec)': { number: data.durationSec },
-      'Call ID': { rich_text: [{ text: { content: data.vapiCallId } }] },
+      'Call ID': { rich_text: [{ text: { content: data.callSid } }] },
       'Call Date': { date: { start: data.callDate } },
     },
     // Page body: summary + full transcript toggle
@@ -125,7 +124,7 @@ export async function createInboxEntry(data: ProcessedCallData): Promise<string>
           rich_text: [
             {
               text: {
-                content: `View full conversation (${data.messages.filter(m => m.role === 'user' || m.role === 'assistant').length} messages · ${data.durationSec}s)`,
+                content: `View full conversation (${data.transcript.filter((entry) => entry.role === 'user' || entry.role === 'assistant').length} turns · ${data.durationSec}s)`,
               },
             },
           ],

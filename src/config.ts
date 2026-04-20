@@ -10,9 +10,10 @@ const envSchema = z.object({
   GOOGLE_API_KEY: z.string(),
   GEMINI_MODEL: z.string().default('gemini-2.5-flash-preview-native-audio-dialog'),
   GEMINI_VOICE: z.string().default('Aoede'),
-  // Twilio
-  TWILIO_ACCOUNT_SID: z.string(),
-  TWILIO_AUTH_TOKEN: z.string(),
+  // Exotel (Indian cloud telephony — exotel.com)
+  EXOTEL_API_KEY: z.string().optional(),
+  EXOTEL_API_TOKEN: z.string().optional(),
+  EXOTEL_SID: z.string().optional(),
   // Notion
   NOTION_API_KEY: z.string(),
   NOTION_INBOX_DB_ID: z.string(),

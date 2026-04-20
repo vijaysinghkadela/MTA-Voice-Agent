@@ -2,9 +2,9 @@ services:
   - type: web
     name: mta-voice-agent
     runtime: node
-    plan: starter          # free spins down — use starter ($7/mo) for always-on voice
+    plan: starter          # free tier sleeps — use starter ($7/mo) for always-on voice
     buildCommand: npm install && npm run build
-    startCommand: npm start
+    startCommand: node dist/index.js
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
@@ -17,9 +17,11 @@ services:
         value: gemini-2.5-flash-preview-native-audio-dialog
       - key: GEMINI_VOICE
         value: Aoede
-      - key: TWILIO_ACCOUNT_SID
+      - key: EXOTEL_API_KEY
         sync: false
-      - key: TWILIO_AUTH_TOKEN
+      - key: EXOTEL_API_TOKEN
+        sync: false
+      - key: EXOTEL_SID
         sync: false
       - key: NOTION_API_KEY
         sync: false
